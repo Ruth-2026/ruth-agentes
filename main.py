@@ -192,6 +192,10 @@ def health():
         "agente": "ZOE",
         "supabase": bool(SUPABASE_URL and SUPABASE_KEY),
         "openrouter": bool(OPENROUTER_API_KEY and "AQUI" not in OPENROUTER_API_KEY),
+        "env_keys": [k for k in os.environ.keys() if not k.startswith("_") and "KEY" in k.upper() or "TOKEN" in k.upper() or "URL" in k.upper()],
+        "has_openrouter_key": "OPENROUTER_API_KEY" in os.environ,
+        "has_supabase_url": "SUPABASE_URL" in os.environ,
+        "has_supabase_key": "SUPABASE_KEY" in os.environ,
         "timestamp": datetime.utcnow().isoformat(),
     })
 
