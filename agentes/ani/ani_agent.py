@@ -7,7 +7,7 @@ import json
 import requests
 from datetime import datetime
 
-BASE_DIR = r"D:\aplexgrow_antigravity\RUTH_INMOBILIARIA"
+BASE_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 
 
