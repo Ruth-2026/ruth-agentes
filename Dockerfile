@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto del código
 COPY . .
 
-# Puerto expuesto por Railway (dinámico)
-EXPOSE 8000
+# Puerto que Railway asigna
+EXPOSE $PORT
 
-# Comando de inicio usando $PORT dinámico
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 main:app"]
+# Comando de inicio
+CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 main:app
