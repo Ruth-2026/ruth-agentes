@@ -1,14 +1,7 @@
 {
-    "OPENROUTER_API_KEY": "pon_aqui_tu_key_de_openrouter",
-    "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
-    "MODEL": "deepseek/deepseek-v4-flash",
-    "SUPABASE_URL": "https://jguyfgjxexoewprsjdmu.supabase.co",
-    "SUPABASE_KEY": "sb_secret_tu_key_de_supabase",
-    "GHL_API_KEY": "pon_aqui_tu_key_de_ghl",
-    "GHL_LOCATION_ID": "pon_aqui_tu_location_id",
-    "INMOVILLA_API_KEY": "pon_aqui_tu_key_de_inmovilla",
-    "COMPOSIO_API_KEY": "pon_aqui_tu_key_de_composio",
-    "ELEVENLABS_API_KEY": "pon_aqui_tu_key_de_elevenlabs",
-    "VOZ": "es-ES-XimenaNeural",
-    "ZONAS": ["Castelldefels", "Gavà", "Viladecans"]
+  "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+  "MODEL": "deepseek/deepseek-chat",
+  "SUPABASE_URL": "https://jguyfgjxexoewprsjdmu.supabase.co",
+  "WHATSAPP_PHONE": "+34639101451",
+  "NOTE": "Environment variables OPENROUTER_API_KEY, SUPABASE_SERVICE_ROLE_KEY, and COMPOSIO_API_KEY are injected via Railway environment settings."
 }
