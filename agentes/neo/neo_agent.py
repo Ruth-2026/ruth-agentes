@@ -10,7 +10,7 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-BASE_DIR = r"D:\aplexgrow_antigravity\RUTH_INMOBILIARIA"
+BASE_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
