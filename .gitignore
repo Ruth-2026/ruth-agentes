@@ -1,0 +1,33 @@
+# Entorno virtual
+venv_ruth/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Logs
+logs/*.log
+
+# Output generado
+IA_REVISAR_BORRADORES/
+IA_ELIMINAR_REVISAR/
+
+# Config local (Railway usa variables de entorno)
+config/config.json
+
+# Cosas de AplexGrow que no son de Ruth
+landing/
+landing-aplexgrow/
+
+# Tests/imágenes locales
+screenshot_*.png
+
+# Audio generado
+OUTPUT_VIDEO/
+
+# Sistema
+.DS_Store
+Thumbs.db

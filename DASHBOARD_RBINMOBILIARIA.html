@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RBINMOBILIARIA | Premium Agentic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #E36626;
+            --primary-light: #FF9E6B;
+            --accent: #1A1A1A;
+            --bg-base: #F8F9FA;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-main: #2D3436;
+            --text-soft: #636E72;
+            --shadow-soft: 0 8px 32px 0 rgba(227, 102, 38, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            background-attachment: fixed;
+        }
+
+        /* Sidebar Navegación */
+        aside {
+            width: 280px;
+            background: var(--accent);
+            height: 100vh;
+            position: fixed;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            color: white;
+            z-index: 1000;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            padding-left: 15px;
+        }
+
+        .nav-logo span { color: var(--primary); }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #ADB5BD;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(227, 102, 38, 0.15);
+            color: white;
+        }
+
+        .nav-item.active i { color: var(--primary); }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px 60px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        .user-info h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .user-info p {
+            color: var(--text-soft);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-pill {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--glass-border);
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse-ani 2s infinite;
+        }
+
+        @keyframes pulse-ani {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 35px;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .card-header h3 {
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header i { color: var(--primary); }
+
+        /* Componentes específicos */
+        .radar-zone {
+            background: radial-gradient(circle at center, rgba(227, 102, 38, 0.05) 0%, transparent 70%);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px dashed var(--primary-light);
+        }
+
+        .lead-item {
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #F1F3F5;
+            transition: all 0.3s;
+        }
+
+        .lead-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .lead-info h4 { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+        .lead-info p { font-size: 12px; color: var(--text-soft); }
+
+        .price-tag {
+            background: #FFF4ED;
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .btn-premium {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(227, 102, 38, 0.2);
+        }
+
+        .btn-premium:hover {
+            background: #D35400;
+            transform: scale(1.02);
+        }
+
+        .progress-track {
+            background: #EDF2F7;
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        /* Mini Stats */
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-card span { font-size: 24px; font-weight: 800; color: var(--primary); }
+        .stat-card p { font-size: 11px; color: var(--text-soft); font-weight: 700; text-transform: uppercase; }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            aside { display: none; }
+            main { margin-left: 0; padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <div class="nav-logo">RB<span>INMOBILIARIA</span></div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item active"><i data-lucide="layout-dashboard"></i> Panel Central</li>
+                <li class="nav-item"><i data-lucide="radar"></i> Radar Neo</li>
+                <li class="nav-item"><i data-lucide="user-check"></i> Secretaria Zia</li>
+                <li class="nav-item"><i data-lucide="video"></i> IA Factory Mía</li>
+                <li class="nav-item"><i data-lucide="trending-up"></i> Mercado</li>
+                <li class="nav-item"><i data-lucide="settings"></i> Configuración</li>
+            </ul>
+        </nav>
+        <div style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 20px;">
+            <p style="font-size: 11px; font-weight: 700; color: #636E72;">MOTOR V8 ACTIVO</p>
+            <div class="progress-track" style="height: 4px; background: rgba(255,255,255,0.1);"><div class="progress-fill" style="width: 80%;"></div></div>
+            <p style="font-size: 10px; color: #ADB5BD;">Sincronizado con Supabase</p>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="user-info">
+                <h1>Hola, Ruth 👋</h1>
+                <p>Bienvenida a tu búnker de inteligencia inmobiliaria.</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-pill">
+                    <div class="pulse"></div>
+                    MÍA GENERANDO REEL...
+                </div>
+                <div style="width: 45px; height: 45px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i data-lucide="user"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- COLUMNA PRINCIPAL -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- HERO RADAR -->
+                <div class="glass-card" style="background: linear-gradient(135deg, rgba(227, 102, 38, 0.9) 0%, rgba(211, 84, 0, 1) 100%); color: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 10px;">Neo ha encontrado una joya.</h2>
+                            <p style="opacity: 0.9; margin-bottom: 25px;">Ático en Castelldefels Playa (Particular). 30% por debajo de mercado.</p>
+                            <button class="btn-premium" style="background: white; color: var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.1);">Ver Oportunidad <i data-lucide="arrow-right"></i></button>
+                        </div>
+                        <i data-lucide="sparkles" style="width: 40px; height: 40px; opacity: 0.5;"></i>
+                    </div>
+                </div>
+
+                <!-- LISTADO DE LEADS -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3><i data-lucide="target"></i> Captaciones Recientes</h3>
+                        <span style="font-size: 12px; font-weight: 800; color: var(--primary);">VER TODO</span>
+                    </div>
+                    <div class="radar-zone">
+                        <div class="lead-item">
+                            <div class="lead-info">
+                                <h4>Villa en Gavà Mar</h4>
+                                <p>Detectado hace 12 min en Fotocasa (Particular)</p>
+                            </div>
+                            <div class="price-tag">850.000 €</div>
+                        </div>
+                        <div class="lead-item">
+                            <div class="lead-info">
+                                <h4>Piso Centro Castelldefels</h4>
+                                <p>Detectado hace 45 min en Idealista (Urge venta)</p>
+                            </div>
+                            <div class="price-tag">245.000 €</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTELIGENCIA DE MERCADO -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3><i data-lucide="bar-chart-3"></i> Análisis Zia</h3>
+                    </div>
+                    <p style="color: var(--text-soft); font-size: 14px; line-height: 1.6;">
+                        Ruth, hoy he procesado 14 facturas y he respondido a 22 correos de clientes interesados. 
+                        Hay un patrón de búsqueda creciente en <strong>Montmar</strong> por parte de inversores franceses.
+                    </p>
+                    <div class="mini-stats">
+                        <div class="stat-card"><span>14</span><p>Facturas</p></div>
+                        <div class="stat-card"><span>22</span><p>Emails IA</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA LATERAL -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- IA FACTORY (MÍA) -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3><i data-lucide="clapperboard"></i> IA Factory</h3>
+                    </div>
+                    <div style="background: var(--accent); border-radius: 20px; padding: 25px; color: white; margin-bottom: 20px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: var(--primary); filter: blur(60px); opacity: 0.3;"></div>
+                        <p style="font-size: 11px; font-weight: 700; color: var(--primary-light); margin-bottom: 5px;">ESTADO DEL CLON</p>
+                        <p style="font-size: 18px; font-weight: 800;">Ruth Digital V3.2</p>
+                        <div class="progress-track" style="background: rgba(255,255,255,0.1);"><div class="progress-fill" style="width: 98%;"></div></div>
+                        <p style="font-size: 10px; color: #ADB5BD;">Sincronización de labios perfecta</p>
+                    </div>
+                    <button class="btn-premium" style="width: 100%; justify-content: center;">
+                        <i data-lucide="wand-2"></i> Crear Reel Viral
+                    </button>
+                </div>
+
+                <!-- ENTRENAMIENTO -->
+                <div class="glass-card" style="border: 2px dashed var(--primary-light); background: transparent;">
+                    <div style="text-align: center;">
+                        <i data-lucide="upload-cloud" style="width: 40px; height: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+                        <p style="font-weight: 800; font-size: 14px;">ZONA DE APRENDIZAJE</p>
+                        <p style="font-size: 11px; color: var(--text-soft); margin-top: 5px;">Arrastra aquí para que Zia aprenda tus nuevos protocolos.</p>
+                    </div>
+                </div>
+
+                <!-- LÍNEA ROJA -->
+                <div class="glass-card" style="border-left: 6px solid #FF4757;">
+                    <h3><i data-lucide="alert-triangle" style="color: #FF4757;"></i> Línea Roja</h3>
+                    <p style="font-size: 12px; margin-top: 10px; font-weight: 600;">3 decisiones pendientes de tu aprobación manual antes de ejecutarse.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
