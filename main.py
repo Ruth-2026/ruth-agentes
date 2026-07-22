@@ -100,7 +100,7 @@ def supabase_select(table, filters=None, limit=10):
 # ─── ZOE (Secretaria) ─────────────────────────────────
 
 OPENROUTER_API_KEY = CONFIG.get("OPENROUTER_API_KEY", "")
-MODEL = CONFIG.get("MODEL", "deepseek/deepseek-v4-flash")
+MODEL = CONFIG.get("MODEL", "deepseek/deepseek-chat")
 
 
 def zoe_responder(mensaje, historial=None):
