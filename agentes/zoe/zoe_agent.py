@@ -15,7 +15,7 @@ from docx import Document
 from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-BASE_DIR = r"D:\\aplexgrow_antigravity\\RUTH_INMOBILIARIA"
+BASE_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 
 
@@ -39,7 +39,7 @@ class ZOEAgent:
         self.config = load_config()
         self.api_key = self.config.get("OPENROUTER_API_KEY", "")
         self.base_url = self.config.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        self.model = self.config.get("MODEL", "deepseek/deepseek-v4-flash")
+        self.model = self.config.get("MODEL", "deepseek/deepseek-chat")
         
         # System prompt de ZOE
         self.system_prompt = """Eres ZOE, la secretaria IA de Ruth Inmobiliaria (RB Inmobiliaria).
