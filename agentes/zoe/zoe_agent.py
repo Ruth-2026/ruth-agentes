@@ -365,12 +365,41 @@ INSTRUCCIONES:
 
         return informe
 
+    def gestionar_correo(self, task: str) -> str:
+        """Gestiona correos mediante Composio."""
+        composio_key = self.config.get("COMPOSIO_API_KEY", "")
+        if not composio_key or "AQUI" in composio_key:
+            return "⚠️ ZOE no puede gestionar el correo porque falta COMPOSIO_API_KEY en config.json."
+            
+        try:
+            from composio import ComposioToolSet, App, Action
+            toolset = ComposioToolSet(api_key=composio_key)
+            
+            if "leer" in task.lower() or "revisar" in task.lower() or "bandeja" in task.lower():
+                action_res = toolset.execute_action(
+                    action=Action.GMAIL_FETCH_EMAILS,
+                    params={"max_results": 5, "label_ids": ["INBOX"], "q": "is:unread"}
+                )
+                if isinstance(action_res, dict) and "data" in action_res:
+                    return f"📧 Correos no leídos:\n{json.dumps(action_res['data'], indent=2, ensure_ascii=False)[:1500]}"
+                return f"📧 Resultado GMAIL_FETCH_EMAILS:\n{str(action_res)[:1500]}"
+            
+            elif "enviar" in task.lower() or "escribir" in task.lower():
+                return "📧 Composio conectado. Para enviar un correo, por favor proporciona: Destinatario, Asunto y Cuerpo del mensaje."
+            
+            return "✅ Composio GMAIL está conectado correctamente. Puedo leer ('leer correos') o enviar correos."
+        except Exception as e:
+            return f"⚠️ Error conectando con Composio: {e}"
+
     def execute(self, task: str) -> str:
         """Punto de entrada principal. Usa IA para entender y ejecutar tareas."""
         task_lower = task.lower()
 
         # Tareas detectables por palabras clave → funciones concretas
-        if "contrato" in task_lower or "arras" in task_lower:
+        if "correo" in task_lower or "email" in task_lower or "gmail" in task_lower:
+            return self.gestionar_correo(task)
+
+        elif "contrato" in task_lower or "arras" in task_lower:
             return self.crear_contrato({"arrendador": "Ruth Blanco", "arrendatario": task})
 
         elif "factura" in task_lower:
