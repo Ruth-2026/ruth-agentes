@@ -8,7 +8,7 @@ from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 
 # --- CONFIGURACIÓN ---
-BASE_DIR = r"D:\aplexgrow_antigravity\RUTH_INMOBILIARIA"
+BASE_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 
 def load_config():
@@ -26,7 +26,7 @@ def _get_base_url():
     return os.environ.get("OPENROUTER_BASE_URL") or CONFIG.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 
 def _get_model():
-    return os.environ.get("MODEL") or CONFIG.get("MODEL", "deepseek/deepseek-v4-flash")
+    return os.environ.get("MODEL") or CONFIG.get("MODEL", "deepseek/deepseek-chat")
 
 # --- ESTADO DEL GRAFO ---
 from typing import TypedDict
