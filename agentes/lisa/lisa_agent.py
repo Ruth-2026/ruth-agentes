@@ -7,11 +7,11 @@ import json
 import subprocess
 from datetime import datetime
 
-BASE_DIR = r"D:\aplexgrow_antigravity\RUTH_INMOBILIARIA"
+BASE_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
 
 # Directorios del proyecto
-REMOTION_DIR = r"D:\aplexgrow_antigravity\0_STUDIO_MULTIMEDIA\1_REMOTION_REELS"
+REMOTION_DIR = os.environ.get("REMOTION_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "output", "reels"))
 OUTPUT_VIDEO_DIR = os.path.join(BASE_DIR, "OUTPUT_VIDEO")
 
 
