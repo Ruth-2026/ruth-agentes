@@ -1,6 +1,7 @@
 """
 API REST de Agentes Ruth Inmobiliaria
 Desplegada en Railway para acceso 24/7
+Todos los agentes disponibles via endpoints REST.
 """
 import os
 import json
@@ -34,6 +35,9 @@ def load_config():
         "MODEL": "MODEL",
         "GHL_API_KEY": "GHL_API_KEY",
         "COMPOSIO_API_KEY": "COMPOSIO_API_KEY",
+        "ELEVENLABS_API_KEY": "ELEVENLABS_API_KEY",
+        "INMOVILLA_API_KEY": "INMOVILLA_API_KEY",
+        "HEYGEN_API_KEY": "HEYGEN_API_KEY",
     }
     for env_key, config_key in env_map.items():
         if os.environ.get(env_key):
@@ -122,7 +126,6 @@ INSTRUCCIONES:
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    # Añadir historial si hay
     if historial:
         for h in historial:
             messages.append({"role": "user", "content": h.get("mensaje", "")})
@@ -154,7 +157,6 @@ INSTRUCCIONES:
 
         respuesta = resp.json()["choices"][0]["message"]["content"]
 
-        # Guardar conversación en Supabase
         supabase_insert("conversaciones", {
             "agente": "ZOE",
             "usuario": "Ruth",
@@ -172,16 +174,77 @@ INSTRUCCIONES:
 
 # ─── ENDPOINTS API ────────────────────────────────────
 
-@app.route("/")
-def home():
-    return jsonify({
-        "agente": "ZOE - Secretaria de Ruth Inmobiliaria",
-        "estado": "activa",
+AGENTS_INFO = {
+    "zoe": {
+        "name": "ZOE",
+        "rol": "Secretaria IA",
+        "descripcion": "Documentos, contratos, facturas, memoria, informes",
         "endpoints": {
             "chat": "POST /zoe/chat  Body: {\"mensaje\": \"...\"}",
             "historial": "GET /zoe/historial?limite=10",
-            "health": "GET /health",
+            "memoria": "GET/POST /zoe/memoria",
         }
+    },
+    "ani": {
+        "name": "ANI",
+        "rol": "Formularios",
+        "descripcion": "Rellena Inmovilla, GHL y CRMs automáticamente",
+        "endpoints": {
+            "ejecutar": "POST /ani/ejecutar  Body: {\"tarea\": \"...\"}",
+            "contacto_ghl": "POST /ani/contacto-ghl",
+            "oportunidad_ghl": "POST /ani/oportunidad-ghl",
+            "propiedad_inmovilla": "POST /ani/propiedad-inmovilla",
+        }
+    },
+    "lisa": {
+        "name": "LISA",
+        "rol": "Marketing",
+        "descripcion": "Reels, clones de voz, contenido redes sociales",
+        "endpoints": {
+            "ejecutar": "POST /lisa/ejecutar  Body: {\"tarea\": \"...\"}",
+            "script_reel": "POST /lisa/script-reel",
+            "voz": "POST /lisa/voz",
+            "post": "POST /lisa/post",
+        }
+    },
+    "neo": {
+        "name": "NEO",
+        "rol": "Radar Inmobiliario",
+        "descripcion": "Busca vendedores particulares en portales y redes",
+        "endpoints": {
+            "ejecutar": "POST /neo/ejecutar  Body: {\"tarea\": \"...\"}",
+            "buscar": "POST /neo/buscar",
+        }
+    },
+    "roy": {
+        "name": "ROY",
+        "rol": "Orquestador",
+        "descripcion": "Coordina todos los agentes usando LangGraph",
+        "endpoints": {
+            "ejecutar": "POST /roy/ejecutar  Body: {\"tarea\": \"...\"}",
+        }
+    },
+    "whatsapp": {
+        "name": "WHATSAPP",
+        "rol": "Mensajería",
+        "descripcion": "WhatsApp Business, avisos, agenda, seguimientos",
+        "endpoints": {
+            "ejecutar": "POST /whatsapp/ejecutar  Body: {\"tarea\": \"...\"}",
+            "enviar": "POST /whatsapp/enviar",
+            "aviso_visita": "POST /whatsapp/aviso-visita",
+        }
+    },
+}
+
+
+@app.route("/")
+def home():
+    return jsonify({
+        "agencia": "Ruth Inmobiliaria",
+        "api": "Agentes IA 24/7",
+        "version": "2.0",
+        "agentes": {k: {"nombre": v["name"], "rol": v["rol"], "descripcion": v["descripcion"]} for k, v in AGENTS_INFO.items()},
+        "health": "GET /health",
     })
 
 
@@ -189,16 +252,17 @@ def home():
 def health():
     return jsonify({
         "status": "ok",
-        "agente": "ZOE",
+        "version": "2.0",
         "supabase": bool(SUPABASE_URL and SUPABASE_KEY),
         "openrouter": bool(OPENROUTER_API_KEY and "AQUI" not in OPENROUTER_API_KEY),
-        "env_keys": [k for k in os.environ.keys() if not k.startswith("_") and "KEY" in k.upper() or "TOKEN" in k.upper() or "URL" in k.upper()],
-        "has_openrouter_key": "OPENROUTER_API_KEY" in os.environ,
-        "has_supabase_url": "SUPABASE_URL" in os.environ,
-        "has_supabase_key": "SUPABASE_KEY" in os.environ,
+        "agentes_disponibles": list(AGENTS_INFO.keys()),
         "timestamp": datetime.utcnow().isoformat(),
     })
 
+
+# ═══════════════════════════════════════════════════════
+# ZOE - Secretaria
+# ═══════════════════════════════════════════════════════
 
 @app.route("/zoe/chat", methods=["POST"])
 def zoe_chat():
@@ -208,11 +272,10 @@ def zoe_chat():
     if not mensaje:
         return jsonify({"error": "El campo 'mensaje' es obligatorio"}), 400
 
-    # Obtener historial opcional
     historial = None
     h = data.get("historial")
     if h:
-        historial = h[-10:]  # Últimas 10 conversaciones
+        historial = h[-10:]
 
     respuesta = zoe_responder(mensaje, historial)
 
@@ -251,7 +314,6 @@ def zoe_memoria():
         data = supabase_select("memoria_agentes", {"agente": f"eq.{agente}"}, limit=50)
         return jsonify({"memoria": data})
 
-    # POST: guardar en memoria
     data = request.get_json(force=True)
     clave = data.get("clave", "").strip()
     valor = data.get("valor")
@@ -270,9 +332,248 @@ def zoe_memoria():
     return jsonify({"error": "No se pudo guardar en Supabase"}), 500
 
 
+# ═══════════════════════════════════════════════════════
+# ANI - Formularios
+# ═══════════════════════════════════════════════════════
+
+@app.route("/ani/ejecutar", methods=["POST"])
+def ani_ejecutar():
+    """Ejecuta una tarea en ANI."""
+    try:
+        from agentes.ani import ANIAgent
+        agent = ANIAgent()
+        data = request.get_json(force=True)
+        tarea = data.get("tarea", "").strip()
+        if not tarea:
+            return jsonify({"error": "El campo 'tarea' es obligatorio"}), 400
+        resultado = agent.execute(tarea)
+        return jsonify({"agente": "ANI", "tarea": tarea, "resultado": resultado})
+    except Exception as e:
+        logger.error(f"ANI error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/ani/contacto-ghl", methods=["POST"])
+def ani_contacto_ghl():
+    """Crea un contacto en GoHighLevel."""
+    try:
+        from agentes.ani import ANIAgent
+        agent = ANIAgent()
+        data = request.get_json(force=True)
+        resultado = agent.crear_contacto_ghl(data)
+        return jsonify({"agente": "ANI", "accion": "crear_contacto_ghl", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/ani/oportunidad-ghl", methods=["POST"])
+def ani_oportunidad_ghl():
+    """Crea una oportunidad en GHL."""
+    try:
+        from agentes.ani import ANIAgent
+        agent = ANIAgent()
+        data = request.get_json(force=True)
+        resultado = agent.crear_opportunidad_ghl(data)
+        return jsonify({"agente": "ANI", "accion": "crear_oportunidad_ghl", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/ani/propiedad-inmovilla", methods=["POST"])
+def ani_propiedad_inmovilla():
+    """Sube una propiedad a Inmovilla."""
+    try:
+        from agentes.ani import ANIAgent
+        agent = ANIAgent()
+        data = request.get_json(force=True)
+        resultado = agent.subir_propiedad_inmovilla(data)
+        return jsonify({"agente": "ANI", "accion": "subir_propiedad_inmovilla", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════
+# LISA - Marketing
+# ═══════════════════════════════════════════════════════
+
+@app.route("/lisa/ejecutar", methods=["POST"])
+def lisa_ejecutar():
+    """Ejecuta una tarea en LISA."""
+    try:
+        from agentes.lisa import LISAAgent
+        agent = LISAAgent()
+        data = request.get_json(force=True)
+        tarea = data.get("tarea", "").strip()
+        if not tarea:
+            return jsonify({"error": "El campo 'tarea' es obligatorio"}), 400
+        resultado = agent.execute(tarea)
+        return jsonify({"agente": "LISA", "tarea": tarea, "resultado": resultado})
+    except Exception as e:
+        logger.error(f"LISA error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/lisa/script-reel", methods=["POST"])
+def lisa_script_reel():
+    """Genera un guion de Reel para una propiedad."""
+    try:
+        from agentes.lisa import LISAAgent
+        agent = LISAAgent()
+        data = request.get_json(force=True)
+        resultado = agent.generar_script_reel(data)
+        return jsonify({"agente": "LISA", "accion": "script_reel", "script": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/lisa/voz", methods=["POST"])
+def lisa_voz():
+    """Genera voz con ElevenLabs."""
+    try:
+        from agentes.lisa import LISAAgent
+        agent = LISAAgent()
+        data = request.get_json(force=True)
+        texto = data.get("texto", "").strip()
+        if not texto:
+            return jsonify({"error": "El campo 'texto' es obligatorio"}), 400
+        voz = data.get("voz", "es-ES-XimenaNeural")
+        resultado = agent.generar_voz(texto, voz)
+        return jsonify({"agente": "LISA", "accion": "generar_voz", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/lisa/post", methods=["POST"])
+def lisa_post():
+    """Genera un post para Instagram."""
+    try:
+        from agentes.lisa import LISAAgent
+        agent = LISAAgent()
+        data = request.get_json(force=True)
+        tipo = data.get("tipo", "venta")
+        resultado = agent.generar_post_instagram(tipo, data)
+        return jsonify({"agente": "LISA", "accion": "generar_post", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════
+# NEO - Radar Inmobiliario
+# ═══════════════════════════════════════════════════════
+
+@app.route("/neo/ejecutar", methods=["POST"])
+def neo_ejecutar():
+    """Ejecuta una tarea en NEO."""
+    try:
+        from agentes.neo import NEOAgent
+        agent = NEOAgent()
+        data = request.get_json(force=True)
+        tarea = data.get("tarea", "").strip()
+        if not tarea:
+            return jsonify({"error": "El campo 'tarea' es obligatorio"}), 400
+        resultado = agent.execute(tarea)
+        return jsonify({"agente": "NEO", "tarea": tarea, "resultado": resultado})
+    except Exception as e:
+        logger.error(f"NEO error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/neo/buscar", methods=["POST"])
+def neo_buscar():
+    """Busca propiedades en portales inmobiliarios."""
+    try:
+        from agentes.neo import NEOAgent
+        agent = NEOAgent()
+        data = request.get_json(force=True)
+        zona = data.get("zona", "castelldefels")
+        tipo = data.get("tipo", "venta")
+        resultados_idealista = agent.buscar_idealista(zona, tipo)
+        resultados_fotocasa = agent.buscar_fotocasa(zona)
+        return jsonify({
+            "agente": "NEO",
+            "zona": zona,
+            "idealista": resultados_idealista,
+            "fotocasa": resultados_fotocasa,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════
+# ROY - Orquestador (LangGraph)
+# ═══════════════════════════════════════════════════════
+
+@app.route("/roy/ejecutar", methods=["POST"])
+def roy_ejecutar():
+    """Ejecuta una orden a través del orquestador ROY (LangGraph)."""
+    try:
+        from agentes.roy import run
+        data = request.get_json(force=True)
+        tarea = data.get("tarea", "").strip()
+        if not tarea:
+            return jsonify({"error": "El campo 'tarea' es obligatorio"}), 400
+        resultado = run(tarea)
+        return jsonify({"agente": "ROY", "tarea": tarea, "resultado": resultado})
+    except Exception as e:
+        logger.error(f"ROY error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════
+# WHATSAPP - Mensajería
+# ═══════════════════════════════════════════════════════
+
+@app.route("/whatsapp/ejecutar", methods=["POST"])
+def whatsapp_ejecutar():
+    """Ejecuta una tarea en WHATSAPP."""
+    try:
+        from agentes.whatsapp import WhatsAppAgent
+        agent = WhatsAppAgent()
+        data = request.get_json(force=True)
+        tarea = data.get("tarea", "").strip()
+        if not tarea:
+            return jsonify({"error": "El campo 'tarea' es obligatorio"}), 400
+        resultado = agent.execute(tarea)
+        return jsonify({"agente": "WHATSAPP", "tarea": tarea, "resultado": resultado})
+    except Exception as e:
+        logger.error(f"WHATSAPP error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/whatsapp/enviar", methods=["POST"])
+def whatsapp_enviar():
+    """Envía un mensaje de WhatsApp."""
+    try:
+        from agentes.whatsapp import WhatsAppAgent
+        agent = WhatsAppAgent()
+        data = request.get_json(force=True)
+        telefono = data.get("telefono", "").strip()
+        mensaje = data.get("mensaje", "").strip()
+        if not telefono or not mensaje:
+            return jsonify({"error": "Los campos 'telefono' y 'mensaje' son obligatorios"}), 400
+        resultado = agent.enviar_mensaje(telefono, mensaje)
+        return jsonify({"agente": "WHATSAPP", "resultado": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/whatsapp/aviso-visita", methods=["POST"])
+def whatsapp_aviso_visita():
+    """Genera un aviso de visita para WhatsApp."""
+    try:
+        from agentes.whatsapp import WhatsAppAgent
+        agent = WhatsAppAgent()
+        data = request.get_json(force=True)
+        resultado = agent.generar_aviso_visita(data)
+        return jsonify({"agente": "WHATSAPP", "aviso": resultado})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ─── INICIO ───────────────────────────────────────────
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    logger.info(f"🟢 ZOE API iniciada en puerto {port}")
+    logger.info(f"🟢 Ruth Agentes API iniciada en puerto {port}")
+    logger.info(f"📋 Agentes disponibles: {', '.join(AGENTS_INFO.keys())}")
     app.run(host="0.0.0.0", port=port, debug=False)

@@ -19,5 +19,9 @@ beautifulsoup4==4.13.4
 # Voz
 edge-tts==6.1.12
 
+# LangGraph (ROY)
+langgraph==0.3.0
+langchain-openai==0.3.0
+
 # Utilidades
 python-dotenv==1.1.0
