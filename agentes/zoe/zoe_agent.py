@@ -366,30 +366,105 @@ INSTRUCCIONES:
         return informe
 
     def gestionar_correo(self, task: str) -> str:
-        """Gestiona correos mediante Composio."""
-        composio_key = self.config.get("COMPOSIO_API_KEY", "")
-        if not composio_key or "AQUI" in composio_key:
-            return "⚠️ ZOE no puede gestionar el correo porque falta COMPOSIO_API_KEY en config.json."
-            
+        """Gestiona correos mediante IMAP/SMTP directo (sin Composio)."""
+        emails = self.config.get("EMAILS", {})
+        if not emails:
+            return "⚠️ No hay cuentas de email configuradas en config.json (EMAILS)."
+
+        # Usar la cuenta activa o la primera disponible
+        cuenta_activa = self.config.get("EMAIL_ACTIVA", list(emails.keys())[0])
+        password = emails.get(cuenta_activa)
+        if not password:
+            return f"⚠️ No hay contraseña para {cuenta_activa}"
+
+        import imaplib
+        import smtplib
+        import email as email_lib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from email.header import decode_header
+
+        # Detectar servidor según el dominio
+        dominio = cuenta_activa.split("@")[1].lower()
+        if "gmail.com" in dominio or "googlemail.com" in dominio:
+            return ("⚠️ Las cuentas Gmail necesitan autorización vía Composio (Ruth debe aprobarlo).\n"
+                    "Las cuentas disponibles por SMTP directo son:\n" +
+                    "\n".join(f"  • {e}" for e in emails.keys() if "gmail" not in e.split("@")[1].lower()))
+        elif "hotmail.com" in dominio or "outlook.com" in dominio or "live.com" in dominio:
+            imap_server, smtp_server = "outlook.office365.com", "smtp.office365.com"
+        else:
+            # Dominio genérico (rbin.es, rbainmobiliaria.com, etc.)
+            imap_server, smtp_server = imap_server or "imap.hostinger.com", smtp_server or "smtp.hostinger.com"
+
+        task_lower = task.lower()
+
+        if "enviar" in task_lower or "escribir" in task_lower or "mandar" in task_lower:
+            return ("📝 Para enviar un email dime:\n"
+                    "   • Destinatario\n"
+                    "   • Asunto\n"
+                    "   • Mensaje\n\n"
+                    f"Cuenta: {cuenta_activa}")
+        
         try:
-            from composio import ComposioToolSet, App, Action
-            toolset = ComposioToolSet(api_key=composio_key)
+            # Leer correos vía IMAP
+            mail = imaplib.IMAP4_SSL(imap_server)
+            mail.login(cuenta_activa, password)
+            mail.select("inbox")
+
+            sin_leer = "no leído" in task_lower or "nuevo" in task_lower or "sin leer" in task_lower
+            if sin_leer:
+                status, messages = mail.search(None, "UNSEEN")
+            else:
+                status, messages = mail.search(None, "ALL")
+
+            if status != "OK":
+                mail.logout()
+                return "No se pudieron buscar los correos."
+
+            ids = messages[0].split()
+            if not ids:
+                mail.logout()
+                return f"📬 No hay correos{' nuevos' if sin_leer else ''} en {cuenta_activa}."
+
+            # Últimos 5 correos
+            ids = ids[-5:]
+            resultados = []
+
+            for e_id in ids:
+                status, data = mail.fetch(e_id, "(RFC822)")
+                if status != "OK":
+                    continue
+                msg = email_lib.message_from_bytes(data[0][1])
+
+                subject, encoding = decode_header(msg["Subject"])[0]
+                if isinstance(subject, bytes):
+                    subject = subject.decode(encoding if encoding else "utf-8", errors="replace")
+
+                from_ = msg.get("From", "")
+                date = msg.get("Date", "")
+                body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        if part.get_content_type() == "text/plain":
+                            body = part.get_payload(decode=True).decode("utf-8", errors="replace")[:200]
+                            break
+                else:
+                    body = msg.get_payload(decode=True).decode("utf-8", errors="replace")[:200]
+
+                resultados.append(f"• **{subject}**\n  De: {from_}\n  → {body.strip()[:100]}...\n")
+
+            mail.logout()
             
-            if "leer" in task.lower() or "revisar" in task.lower() or "bandeja" in task.lower():
-                action_res = toolset.execute_action(
-                    action=Action.GMAIL_FETCH_EMAILS,
-                    params={"max_results": 5, "label_ids": ["INBOX"], "q": "is:unread"}
-                )
-                if isinstance(action_res, dict) and "data" in action_res:
-                    return f"📧 Correos no leídos:\n{json.dumps(action_res['data'], indent=2, ensure_ascii=False)[:1500]}"
-                return f"📧 Resultado GMAIL_FETCH_EMAILS:\n{str(action_res)[:1500]}"
-            
-            elif "enviar" in task.lower() or "escribir" in task.lower():
-                return "📧 Composio conectado. Para enviar un correo, por favor proporciona: Destinatario, Asunto y Cuerpo del mensaje."
-            
-            return "✅ Composio GMAIL está conectado correctamente. Puedo leer ('leer correos') o enviar correos."
+            header = f"📬 **{len(resultados)} correos**"
+            if sin_leer:
+                header += " NO LEÍDOS"
+            header += f" de {cuenta_activa}:\n\n"
+            return header + "\n".join(resultados)
+
+        except imaplib.IMAP4.error as e:
+            return f"⚠️ Error de autenticación IMAP para {cuenta_activa}: {e}"
         except Exception as e:
-            return f"⚠️ Error conectando con Composio: {e}"
+            return f"⚠️ Error leyendo correos: {e}"
 
     def execute(self, task: str) -> str:
         """Punto de entrada principal. Usa IA para entender y ejecutar tareas."""

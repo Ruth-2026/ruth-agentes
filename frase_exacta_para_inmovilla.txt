@@ -1,0 +1,15 @@
+FRASES DE SEGURIDAD PARA INMOVILLA Y GHL
+
+Siguiendo la regla de oro: EL AGENTE NUNCA TIENE AUTORIZACIÓN PARA BORRAR O MODIFICAR LA CONFIGURACIÓN GENERAL DE INMOVILLA. EL AGENTE SOLO PUEDE BORRAR LO QUE SE LE AUTORIZA EXPRESAMENTE (un cliente o ficha específica).
+
+1️⃣ PARA CREAR O SUBIR DATOS NUEVOS:
+Frase exacta: autorizo a crear
+Ejemplo: "autorizo a crear la ficha del cliente Juan Pérez"
+
+2️⃣ PARA BORRAR O MODIFICAR UN DATO CONCRETO (CLIENTE O FICHA):
+Frase exacta: autorizo a borrar [y añades qué dato es]
+Ejemplo: "autorizo a borrar la ficha del cliente Juan Pérez"
+
+Si intentas borrar algo sin decir "autorizo a borrar [dato]", el agente se bloqueará automáticamente y te responderá esto:
+
+"🛑 BLOQUEO DE SEGURIDAD: No tienes permiso directo para borrar ni modificar. Nunca tengo autorización para tocar la configuración general de Inmovilla. SÓLO PUEDO BORRAR LO QUE SE ME AUTORIZA EXPRESAMENTE (un cliente o ficha). Para confirmarlo, dime exactamente qué borro escribiendo: 'autorizo a borrar [dato específico]'"

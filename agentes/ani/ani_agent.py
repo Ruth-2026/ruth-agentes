@@ -188,6 +188,18 @@ class ANIAgent:
         """Punto de entrada principal."""
         task_lower = task.lower()
 
+        if "listar" in task_lower and "propiedad" in task_lower:
+            result = self.listar_propiedades_inmovilla()
+            if "error" in result:
+                return f"⚠️ {result['error']}"
+            return f"Propiedades en Inmovilla: {json.dumps(result, indent=2, ensure_ascii=False)[:2000]}"
+
+        # --- BLOQUEO DE SEGURIDAD ESTRICTO PARA MODIFICACIONES ---
+        es_modificacion = any(palabra in task_lower for palabra in ["crear", "subir", "actualizar", "borrar", "eliminar", "modificar", "contacto", "oportunidad", "pipeline", "propiedad"])
+        if es_modificacion and "listar" not in task_lower and "buscar" not in task_lower:
+            if "autorización expresa confirmada" not in task_lower and "autorizacion expresa confirmada" not in task_lower:
+                return "🛑 **BLOQUEO DE SEGURIDAD ACTIVADO**: No tienes permiso para borrar, modificar ni añadir datos en Inmovilla o GHL. Para ejecutar esta acción, debes incluir exactamente la frase 'autorización expresa confirmada' en tu orden."
+
         if "contacto" in task_lower and ("ghl" in task_lower or "crm" in task_lower):
             return "ANI necesita los datos del contacto (nombre, email, telefono). Enviamelos y los creo en GHL."
 
@@ -196,7 +208,7 @@ class ANIAgent:
                 return "⚠️ Falta GHL_API_KEY. Configuralo en config.json."
             return "ANI necesita los datos de la oportunidad (nombre, pipeline, contacto). Enviamelos."
 
-        elif "propiedad" in task_lower and "inmovilla" in task_lower.lower():
+        elif "propiedad" in task_lower and "inmovilla" in task_lower:
             if not self._check_config("inmovilla"):
                 return "⚠️ Falta INMOVILLA_API_KEY. Configuralo en config.json."
             return "ANI necesita los datos de la propiedad (titulo, precio, ubicacion, habitaciones, etc.). Enviamelos y la subo."
@@ -204,11 +216,6 @@ class ANIAgent:
         elif "formulario" in task_lower:
             return "ANI genera formularios HTML. Indica que campos necesitas."
 
-        elif "listar" in task_lower and "propiedad" in task_lower:
-            result = self.listar_propiedades_inmovilla()
-            if "error" in result:
-                return f"⚠️ {result['error']}"
-            return f"Propiedades en Inmovilla: {json.dumps(result, indent=2, ensure_ascii=False)[:2000]}"
 
         else:
             return f"[ANI] Soy la agente de formularios. Trabajo con GHL, Inmovilla y genero formularios web. Que necesitas? (API keys aun no configuradas)"
