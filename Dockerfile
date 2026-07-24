@@ -19,4 +19,4 @@ COPY . .
 EXPOSE $PORT
 
 # Comando de inicio
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 main:app
+CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --log-level debug --error-logfile - --access-logfile - --capture-output main:app
